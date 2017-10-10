@@ -4,8 +4,8 @@
 typedef struct evhtp_request_s evhtp_request_t
 ``
 
-- evhtp_request_s
-``
+- evhtp_request_s  
+```
 /**
  * @brief a structure containing all information for a http request.
  */
@@ -32,4 +32,9 @@ struct evhtp_request_s {
 
     TAILQ_ENTRY(evhtp_request_s) next;
 };
-``
+```
+
+- evhtp_header_find
+```
+evhtp_header_find(htp_req->headers_in, char * key)
+```
