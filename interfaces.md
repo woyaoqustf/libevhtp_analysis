@@ -184,4 +184,50 @@ enum htp_scheme {
 };
 
 ```
+
+```
+static void
+_evhtp_accept_cb(evserv_t * serv, int fd, struct sockaddr * s, int sl, void * arg) {
+    evhtp_t            * htp = arg;
+    evhtp_connection_t * connection;
+
+    if (evhtp_unlikely(!(connection = _evhtp_connection_new(htp, fd, evhtp_type_server)))) {
+        return;
+    }
+
+    htp_log_debug("fd = %d, conn = %p", fd, connection);
+
+    connection->saddr = malloc(sl);
+    evhtp_alloc_assert(connection->saddr);
+
+    memcpy(connection->saddr, s, sl);
+
+#ifndef EVHTP_DISABLE_EVTHR
+    if (htp->thr_pool != NULL) {
+        if (evthr_pool_defer(htp->thr_pool,
+                             _evhtp_run_in_thread, connection) != EVTHR_RES_OK) {
+            evutil_closesocket(connection->sock);
+            evhtp_connection_free(connection);
+
+            return;
+        }
+
+        return;
+    }
+#endif
+    connection->evbase = htp->evbase;
+
+    if (_evhtp_connection_accept(htp->evbase, connection) < 0) {
+        evhtp_connection_free(connection);
+
+        return;
+    }
+
+    if (_evhtp_run_post_accept(htp, connection) < 0) {
+        evhtp_connection_free(connection);
+
+        return;
+    }
+} /* _evhtp_accept_cb */
+```
 ## TODO Vhost
