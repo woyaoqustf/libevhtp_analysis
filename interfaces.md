@@ -42,7 +42,16 @@ evhtp_header_find(htp_req->headers_in, char * key)
 ```
 
 ```
- struct evhtp_s {
+struct evhtp_defaults_s {
+    evhtp_callback_cb    cb;
+    evhtp_pre_accept_cb  pre_accept;
+    evhtp_post_accept_cb post_accept;
+    void               * cbarg;
+    void               * pre_accept_cbarg;
+    void               * post_accept_cbarg;
+};
+
+struct evhtp_s {
       evhtp_t  * parent;                  /**< only when this is a vhost */
       evbase_t * evbase;                  /**< the initialized event_base */
       evserv_t * server;                  /**< the libevent listener struct */
