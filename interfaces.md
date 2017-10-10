@@ -230,4 +230,74 @@ _evhtp_accept_cb(evserv_t * serv, int fd, struct sockaddr * s, int sl, void * ar
     }
 } /* _evhtp_accept_cb */
 ```
+- _evhtp_connection_accept 设置bufferedevent/sslbuf, timeout&timeoutcb
+```
+static int
+_evhtp_connection_accept(evbase_t * evbase, evhtp_connection_t * connection) {
+    struct timeval * c_recv_timeo;
+    struct timeval * c_send_timeo;
+
+    if (_evhtp_run_pre_accept(connection->htp, connection) < 0) {
+        evutil_closesocket(connection->sock);
+
+        return -1;
+    }
+
+#ifndef EVHTP_DISABLE_SSL
+    if (connection->htp->ssl_ctx != NULL) {
+        connection->ssl = SSL_new(connection->htp->ssl_ctx);
+        connection->bev = bufferevent_openssl_socket_new(evbase,
+                                                         connection->sock,
+                                                         connection->ssl,
+                                                         BUFFEREVENT_SSL_ACCEPTING,
+                                                         connection->htp->bev_flags);
+        SSL_set_app_data(connection->ssl, connection);
+        goto end;
+    }
+#endif
+
+    connection->bev = bufferevent_socket_new(evbase,
+                                             connection->sock,
+                                             connection->htp->bev_flags);
+
+    htp_log_debug("enter sock=%d\n", connection->sock);
+
+#ifndef EVHTP_DISABLE_SSL
+end:
+#endif
+
+    if (connection->recv_timeo.tv_sec || connection->recv_timeo.tv_usec) {
+        c_recv_timeo = &connection->recv_timeo;
+    } else if (connection->htp->recv_timeo.tv_sec ||
+               connection->htp->recv_timeo.tv_usec) {
+        c_recv_timeo = &connection->htp->recv_timeo;
+    } else {
+        c_recv_timeo = NULL;
+    }
+
+    if (connection->send_timeo.tv_sec || connection->send_timeo.tv_usec) {
+        c_send_timeo = &connection->send_timeo;
+    } else if (connection->htp->send_timeo.tv_sec ||
+               connection->htp->send_timeo.tv_usec) {
+        c_send_timeo = &connection->htp->send_timeo;
+    } else {
+        c_send_timeo = NULL;
+    }
+
+    evhtp_connection_set_timeouts(connection, c_recv_timeo, c_send_timeo);
+
+    connection->resume_ev = event_new(evbase, -1, EV_READ | EV_PERSIST,
+                                      _evhtp_connection_resumecb, connection);
+    event_add(connection->resume_ev, NULL);
+
+    bufferevent_enable(connection->bev, EV_READ);
+    bufferevent_setcb(connection->bev,
+                      _evhtp_connection_readcb,
+                      _evhtp_connection_writecb,
+                      _evhtp_connection_eventcb, connection);
+
+    return 0;
+}     /* _evhtp_connection_accept */
+
+```
 ## TODO Vhost
