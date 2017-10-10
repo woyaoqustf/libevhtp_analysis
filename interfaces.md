@@ -97,4 +97,49 @@ struct evhtp_s {
   };
 ```
 
+
+
+_evhtp_accept_cb(evserv_t
+
+_evhtp_conection_new
+
+```
+struct evhtp_connection_s {
+    evhtp_t  * htp;
+    evbase_t * evbase;
+    evbev_t  * bev;
+#ifndef EVHTP_DISABLE_EVTHR
+    evthr_t * thread;
+#endif
+#ifndef EVHTP_DISABLE_SSL
+    evhtp_ssl_t * ssl;
+#endif
+    evhtp_hooks_t   * hooks;
+    htparser        * parser;
+    event_t         * resume_ev;
+    struct sockaddr * saddr;
+    struct timeval    recv_timeo;          /**< conn read timeouts (overrides global) */
+    struct timeval    send_timeo;          /**< conn write timeouts (overrides global) */
+    evutil_socket_t   sock;
+    evhtp_request_t * request;             /**< the request currently being processed */
+    uint64_t          max_body_size;
+    uint64_t          body_bytes_read;
+    uint64_t          num_requests;
+    evhtp_type        type;                /**< server or client */
+    uint8_t           error           : 1,
+                      owner           : 1, /**< set to 1 if this structure owns the bufferevent */
+                      vhost_via_sni   : 1, /**< set to 1 if the vhost was found via SSL SNI */
+                      paused          : 1, /**< this connection has been marked as paused */
+                      connected       : 1, /**< client specific - set after successful connection */
+                      waiting         : 1, /**< used to make sure resuming  happens AFTER sending a reply */
+                      free_connection : 1,
+                      keepalive       : 1; /**< set to 1 after the first request has been processed and the connection is kept open */
+    struct evbuffer * scratch_buf;         /**< always zero'd out after used */
+
+#ifdef EVHTP_FUTURE_USE
+    TAILQ_HEAD(, evhtp_request_s) pending; /**< client pending data */
+#endif
+};
+
+```
 ## TODO Vhost
