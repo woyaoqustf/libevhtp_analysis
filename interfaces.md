@@ -1,0 +1,1 @@
+- evhtp_set_glob_cb(m_evhtp,path.c_str(), void(cb*)(evhtp_request_t* req, void* arg), void *arg);
