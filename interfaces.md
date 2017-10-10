@@ -141,5 +141,47 @@ struct evhtp_connection_s {
 #endif
 };
 
+struct htparser {
+    htpparse_error error;
+    parser_state   state;
+    parser_flags   flags;
+    eval_hdr_val   heval;
+
+    htp_type   type;
+    htp_scheme scheme;
+    htp_method method;
+
+    unsigned char multipart;
+    unsigned char major;
+    unsigned char minor;
+    uint64_t      content_len;      /* this gets decremented as data passes through */
+    uint64_t      orig_content_len; /* this contains the original length of the body */
+    uint64_t      bytes_read;
+    uint64_t      total_bytes_read;
+    unsigned int  status;           /* only for responses */
+    unsigned int  status_count;     /* only for responses */
+
+    char * scheme_offset;
+    char * host_offset;
+    char * port_offset;
+    char * path_offset;
+    char * args_offset;
+
+    void * userdata;
+
+    size_t buf_idx;
+    /* Must be last since htparser_init memsets up to the offset of this buffer */
+    char buf[PARSER_STACK_MAX];
+};
+
+enum htp_scheme {
+    htp_scheme_none = 0,
+    htp_scheme_ftp,
+    htp_scheme_http,
+    htp_scheme_https,
+    htp_scheme_nfs,
+    htp_scheme_unknown
+};
+
 ```
 ## TODO Vhost
