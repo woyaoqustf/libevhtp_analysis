@@ -37,4 +37,6 @@ struct evhtp_request_s {
 - evhtp_header_find
 ```
 evhtp_header_find(htp_req->headers_in, char * key)
+
+#define evhtp_header_find evhtp_kv_find
 ```
