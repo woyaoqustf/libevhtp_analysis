@@ -300,4 +300,40 @@ end:
 }     /* _evhtp_connection_accept */
 
 ```
+- _evhtp_connection_resumecb
+```
+static void
+_evhtp_connection_resumecb(int fd, short events, void * arg) {
+    evhtp_connection_t * c = arg;
+
+    c->paused = 0;
+
+    if (c->request) {
+        c->request->status = EVHTP_RES_OK;
+    }
+
+    if (c->free_connection == 1) {
+        evhtp_connection_free(c);
+
+        return;
+    }
+
+    /* XXX this is a hack to show a potential fix for issues/86, the main indea
+     * is that you call resume AFTER you have sent the reply (not BEFORE).
+     *
+     * When it has been decided this is a proper fix, the pause bit should be
+     * changed to a state-type flag.
+     */
+
+    if (evbuffer_get_length(bufferevent_get_output(c->bev))) {
+        bufferevent_enable(c->bev, EV_WRITE);
+        c->waiting = 1;
+    } else {
+        bufferevent_enable(c->bev, EV_READ | EV_WRITE);
+        _evhtp_connection_readcb(c->bev, c);
+    }
+}
+
+
+```
 ## TODO Vhost
